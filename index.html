@@ -1,0 +1,498 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>IPL 2026 — Prediction League</title>
+<link href="https://fonts.googleapis.com/css2?family=Bebas+Neue&family=Barlow+Condensed:wght@400;600;700&family=Barlow:wght@400;500;600&display=swap" rel="stylesheet">
+<style>
+:root {
+  --bg: #060910;
+  --card: #111827;
+  --card2: #1a2236;
+  --border: rgba(255,255,255,0.06);
+  --border2: rgba(255,255,255,0.12);
+  --gold: #f0c040;
+  --gold2: #e8922a;
+  --red: #e8315b;
+  --green: #34d399;
+  --text: #eef2ff;
+  --muted: #64748b;
+  --muted2: #94a3b8;
+  --r: 14px;
+}
+* { box-sizing: border-box; margin: 0; padding: 0; }
+body {
+  background: var(--bg); color: var(--text);
+  font-family: 'Barlow', sans-serif;
+  min-height: 100vh; overflow-x: hidden;
+}
+body::before {
+  content: ''; position: fixed; inset: 0;
+  background:
+    radial-gradient(ellipse 100% 55% at 50% -5%, rgba(240,192,64,0.08) 0%, transparent 55%),
+    radial-gradient(ellipse 50% 40% at 90% 85%, rgba(96,165,250,0.05) 0%, transparent 50%),
+    radial-gradient(ellipse 40% 30% at 5% 95%, rgba(232,49,91,0.05) 0%, transparent 50%);
+  pointer-events: none; z-index: 0;
+}
+body::after {
+  content: ''; position: fixed; inset: 0;
+  background-image: repeating-linear-gradient(0deg,transparent,transparent 80px,rgba(255,255,255,0.013) 80px,rgba(255,255,255,0.013) 81px);
+  pointer-events: none; z-index: 0;
+}
+.page { position: relative; z-index: 1; max-width: 900px; margin: 0 auto; padding: 0 18px 80px; }
+
+/* HERO */
+.hero { padding: 52px 0 36px; }
+.hero-eyebrow { display: flex; align-items: center; gap: 10px; margin-bottom: 18px; }
+.hero-dot {
+  width: 8px; height: 8px; border-radius: 50%;
+  background: var(--gold); box-shadow: 0 0 8px rgba(240,192,64,0.6);
+  animation: pulse 2s ease-in-out infinite;
+}
+@keyframes pulse { 0%,100%{opacity:1;transform:scale(1)} 50%{opacity:.5;transform:scale(.7)} }
+.hero-live {
+  font-family:'Barlow Condensed',sans-serif;
+  font-size:11px; font-weight:700; letter-spacing:.14em;
+  text-transform:uppercase; color:var(--gold);
+}
+.hero h1 {
+  font-family:'Bebas Neue',sans-serif;
+  font-size:clamp(64px,12vw,110px);
+  line-height:.88; letter-spacing:.02em; color:var(--text);
+}
+.hero h1 em { color:var(--gold); font-style:normal; }
+.hero-desc { margin-top:18px; font-size:15px; color:var(--muted2); max-width:480px; line-height:1.65; }
+.hero-actions { display:flex; align-items:center; gap:12px; margin-top:22px; flex-wrap:wrap; }
+.btn-refresh {
+  display:inline-flex; align-items:center; gap:7px;
+  background:rgba(240,192,64,0.12); border:1px solid rgba(240,192,64,0.35);
+  color:var(--gold); border-radius:10px; padding:10px 20px;
+  font-size:13px; font-weight:600; font-family:'Barlow',sans-serif;
+  cursor:pointer; transition:background .2s,transform .1s; letter-spacing:.02em;
+}
+.btn-refresh:hover { background:rgba(240,192,64,0.22); }
+.btn-refresh:active { transform:scale(.97); }
+.btn-refresh svg { width:14px; height:14px; }
+#status { font-size:13px; color:var(--muted); }
+
+/* METRICS */
+.metrics-grid {
+  display:grid; grid-template-columns:repeat(4,1fr);
+  gap:10px; margin-bottom:28px;
+}
+@media(max-width:600px){ .metrics-grid { grid-template-columns:repeat(2,1fr); } }
+.metric-tile {
+  background:var(--card); border:1px solid var(--border);
+  border-radius:var(--r); padding:18px 16px 14px;
+  position:relative; overflow:hidden;
+  opacity:0; transform:translateY(14px);
+  transition:opacity .4s ease,transform .4s ease;
+}
+.metric-tile::before {
+  content:''; position:absolute; top:0; left:0; right:0; height:2px;
+  background:linear-gradient(90deg,var(--gold2),var(--gold)); opacity:0; transition:opacity .3s;
+}
+.metric-tile:hover::before { opacity:1; }
+.metric-tile.show { opacity:1; transform:none; }
+.mt-label { font-size:10px; font-weight:600; letter-spacing:.1em; text-transform:uppercase; color:var(--muted); margin-bottom:8px; }
+.mt-val { font-family:'Bebas Neue',sans-serif; font-size:34px; color:var(--text); line-height:1; }
+.mt-val.gold { color:var(--gold); }
+
+/* TABS */
+.tabs {
+  display:flex; gap:2px; margin-bottom:22px;
+  background:var(--card); border:1px solid var(--border);
+  border-radius:12px; padding:4px; width:fit-content;
+}
+.tab-btn {
+  background:transparent; border:none; border-radius:9px;
+  padding:8px 22px; font-size:13px; font-weight:600;
+  font-family:'Barlow',sans-serif; color:var(--muted2);
+  cursor:pointer; transition:background .2s,color .2s; letter-spacing:.02em;
+}
+.tab-btn.active { background:linear-gradient(135deg,var(--gold2),var(--gold)); color:#1a0f00; }
+.tab-panel { display:none; }
+.tab-panel.active { display:block; }
+
+/* LEADERBOARD */
+.lb-list { display:flex; flex-direction:column; gap:8px; }
+.lb-row {
+  background:var(--card); border:1px solid var(--border);
+  border-radius:12px; padding:14px 18px;
+  display:flex; align-items:center; gap:12px;
+  opacity:0; transform:translateX(-12px);
+  transition:opacity .35s,transform .35s,border-color .2s;
+  position:relative; overflow:hidden;
+}
+.lb-row.top1 { border-color:rgba(240,192,64,0.25); }
+.lb-row.top1::before {
+  content:''; position:absolute; inset:0;
+  background:linear-gradient(90deg,rgba(240,192,64,0.05),transparent 60%);
+  pointer-events:none;
+}
+.lb-row.show { opacity:1; transform:none; }
+.lb-row:hover { border-color:var(--border2); }
+.lb-num {
+  font-family:'Bebas Neue',sans-serif; font-size:26px;
+  width:32px; text-align:center; color:var(--muted); flex-shrink:0;
+}
+.lb-num.r1 { color:var(--gold); }
+.lb-num.r2 { color:#94a3b8; }
+.lb-num.r3 { color:#cd7c54; }
+.lb-avatar {
+  width:38px; height:38px; border-radius:50%;
+  background:var(--card2); border:1px solid var(--border2);
+  display:flex; align-items:center; justify-content:center;
+  font-family:'Barlow Condensed',sans-serif;
+  font-size:14px; font-weight:700; color:var(--muted2); flex-shrink:0;
+}
+.lb-avatar.a0 { background:rgba(240,192,64,0.15); border-color:rgba(240,192,64,0.3); color:var(--gold); }
+.lb-info { flex:1; min-width:0; }
+.lb-name-row { display:flex; align-items:center; gap:8px; margin-bottom:3px; }
+.lb-name { font-size:15px; font-weight:600; color:var(--text); }
+.leader-pill {
+  background:linear-gradient(90deg,var(--gold2),var(--gold));
+  color:#1a0f00; font-size:9px; font-weight:700;
+  letter-spacing:.1em; text-transform:uppercase;
+  padding:2px 8px; border-radius:100px;
+}
+.lb-medals { font-size:12px; color:var(--muted); }
+.lb-bar-col { flex:1; max-width:140px; }
+.lb-bar-bg { height:4px; background:rgba(255,255,255,0.07); border-radius:2px; overflow:hidden; }
+.lb-bar-fill { height:100%; border-radius:2px; background:linear-gradient(90deg,var(--gold2),var(--gold)); }
+.lb-score {
+  text-align:right; flex-shrink:0;
+  font-family:'Bebas Neue',sans-serif;
+  font-size:32px; color:var(--text); line-height:1; min-width:48px;
+}
+.lb-score-label { font-size:10px; color:var(--muted); text-align:right; letter-spacing:.06em; text-transform:uppercase; }
+
+/* MATCHES */
+.matches-grid { display:flex; flex-direction:column; gap:12px; }
+.match-card {
+  background:var(--card); border:1px solid var(--border);
+  border-radius:var(--r); overflow:hidden;
+  opacity:0; transform:translateY(8px);
+  transition:opacity .35s,transform .35s;
+}
+.match-card.show { opacity:1; transform:none; }
+.match-header {
+  display:flex; align-items:center; justify-content:space-between;
+  padding:14px 18px 12px;
+  border-bottom:1px solid var(--border);
+  background:linear-gradient(90deg,rgba(240,192,64,0.07),transparent);
+}
+.match-name {
+  font-family:'Barlow Condensed',sans-serif;
+  font-size:18px; font-weight:700; letter-spacing:.05em;
+  text-transform:uppercase; color:var(--text);
+}
+.match-vs { color:var(--gold); margin:0 5px; }
+.match-num { font-size:11px; font-weight:600; color:var(--muted); letter-spacing:.06em; }
+.picks-row { display:flex; }
+.pick-chip {
+  display:flex; flex-direction:column;
+  padding:13px 18px; border-right:1px solid var(--border);
+  flex:1; transition:background .2s; cursor:default;
+}
+.pick-chip:last-child { border-right:none; }
+.pick-chip:hover { background:rgba(255,255,255,0.025); }
+.pick-rank {
+  font-size:9px; font-weight:700;
+  letter-spacing:.12em; text-transform:uppercase; margin-bottom:5px;
+}
+.pick-rank.r1 { color:var(--gold); }
+.pick-rank.r2 { color:#94a3b8; }
+.pick-rank.r3 { color:#cd7c54; }
+.pick-name {
+  font-family:'Barlow Condensed',sans-serif;
+  font-size:19px; font-weight:700; color:var(--text); letter-spacing:.02em;
+}
+.pick-name.empty { color:var(--muted); font-size:15px; font-weight:400; font-family:'Barlow',sans-serif; }
+
+/* CHART */
+.chart-section { display:flex; flex-direction:column; gap:12px; }
+.chart-row-wrap { display:flex; align-items:center; gap:14px; }
+.chart-label { width:76px; text-align:right; font-size:13px; font-weight:600; color:var(--muted2); flex-shrink:0; }
+.chart-track { flex:1; background:rgba(255,255,255,0.05); border-radius:8px; height:36px; overflow:hidden; position:relative; }
+.chart-fill {
+  height:100%; border-radius:8px;
+  background:linear-gradient(90deg,var(--gold2) 0%,var(--gold) 100%);
+  display:flex; align-items:center; justify-content:flex-end;
+  padding-right:12px; min-width:36px;
+  transition:width .7s cubic-bezier(.16,1,.3,1);
+}
+.chart-fill-val { font-size:13px; font-weight:700; color:#1a0f00; }
+.chart-zero { font-size:13px; color:var(--muted); padding-left:10px; line-height:36px; }
+
+/* FOOTER */
+.footer { margin-top:60px; padding-top:20px; border-top:1px solid var(--border); text-align:center; font-size:12px; color:var(--muted); }
+
+#main-content { display:none; }
+@media(max-width:600px){
+  .lb-bar-col { display:none; }
+  .pick-chip { padding:10px 12px; }
+  .pick-name { font-size:16px; }
+}
+</style>
+</head>
+<body>
+<div class="page">
+
+  <div class="hero">
+    <div class="hero-eyebrow">
+      <div class="hero-dot"></div>
+      <span class="hero-live">Live Standings</span>
+    </div>
+    <h1>IPL<br><em>Prediction</em><br>League</h1>
+    <p class="hero-desc">Your group's IPL 2026 match predictions — live from the sheet.</p>
+    <div class="hero-actions">
+      <button class="btn-refresh" onclick="autoLoad()">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M23 4v6h-6"/><path d="M1 20v-6h6"/><path d="M3.51 9a9 9 0 0114.85-3.36L23 10M1 14l4.64 4.36A9 9 0 0020.49 15"/></svg>
+        Refresh
+      </button>
+      <span id="status"></span>
+    </div>
+  </div>
+
+  <div id="main-content">
+    <div class="metrics-grid" id="metrics-grid"></div>
+    <div class="tabs">
+      <button class="tab-btn active" onclick="setTab('leaderboard',this)">Leaderboard</button>
+      <button class="tab-btn" onclick="setTab('matches',this)">Matches</button>
+      <button class="tab-btn" onclick="setTab('chart',this)">Chart</button>
+    </div>
+    <div class="tab-panel active" id="tab-leaderboard">
+      <div class="lb-list" id="lb-list"></div>
+    </div>
+    <div class="tab-panel" id="tab-matches">
+      <div class="matches-grid" id="matches-grid"></div>
+    </div>
+    <div class="tab-panel" id="tab-chart">
+      <div class="chart-section" id="chart-wrap"></div>
+    </div>
+  </div>
+
+  <div class="footer">IPL 2026 Prediction League &mdash; Season 19</div>
+</div>
+
+<script>
+const DEMO = {
+  matches:[
+    {match:'RCB vs SRH',picks:['Ramesh','Sanju','Void']},
+    {match:'MI vs KKR', picks:['Void','Deva','Raghu']},
+    {match:'RR vs CSK', picks:['Paltans','Ramesh','Vivek']}
+  ],
+  winners:[
+    {name:'Deva',pts:.5},{name:'Kirubha',pts:0},{name:'Ramesh',pts:1.5},
+    {name:'Paltans',pts:1},{name:'Sanju',pts:.5},{name:'Vivek',pts:.25},
+    {name:'Void',pts:1},{name:'Raghu',pts:.25}
+  ],
+  firstPlace:[
+    {name:'Deva',count:0},{name:'Kirubha',count:0},{name:'Ramesh',count:1},
+    {name:'Paltans',count:1},{name:'Sanju',count:0},{name:'Vivek',count:0},
+    {name:'Void',count:1},{name:'Raghu',count:0}
+  ],
+  secondPlace:[
+    {name:'Deva',count:1},{name:'Kirubha',count:0},{name:'Ramesh',count:1},
+    {name:'Paltans',count:0},{name:'Sanju',count:1},{name:'Void',count:0}
+  ],
+  thirdPlace:[
+    {name:'Vivek',count:1},{name:'Raghu',count:1},{name:'Void',count:1}
+  ]
+};
+
+const SHEET_ID = '1GOfJvFP0FniAqIQcyiqpexaQoJbGo3DVZKxTXcpftcE';
+
+function initials(name) {
+  return name.split(' ').map(w=>w[0]).join('').slice(0,2).toUpperCase();
+}
+
+function setStatus(msg, type='') {
+  const el = document.getElementById('status');
+  el.textContent = msg;
+  el.style.color = type==='error'?'#f87171':type==='ok'?'#34d399':'#64748b';
+}
+
+function setTab(id, btn) {
+  document.querySelectorAll('.tab-btn').forEach(b=>b.classList.remove('active'));
+  document.querySelectorAll('.tab-panel').forEach(p=>p.classList.remove('active'));
+  btn.classList.add('active');
+  document.getElementById('tab-'+id).classList.add('active');
+}
+
+function animate(els, cls, delay=60) {
+  els.forEach((el,i)=>setTimeout(()=>el.classList.add(cls), i*delay));
+}
+
+function renderDashboard(data) {
+  document.getElementById('main-content').style.display='block';
+
+  const sorted = [...data.winners].sort((a,b)=>b.pts-a.pts);
+  const leader = sorted[0];
+  const maxPts = Math.max(...sorted.map(p=>p.pts), .01);
+
+  // Metrics
+  const mg = document.getElementById('metrics-grid');
+  mg.innerHTML = `
+    <div class="metric-tile"><div class="mt-label">Leader</div><div class="mt-val gold">${leader.name}</div></div>
+    <div class="metric-tile"><div class="mt-label">Top score</div><div class="mt-val">${leader.pts}</div></div>
+    <div class="metric-tile"><div class="mt-label">Matches</div><div class="mt-val">${data.matches.length}</div></div>
+    <div class="metric-tile"><div class="mt-label">Players</div><div class="mt-val">${data.winners.length}</div></div>
+  `;
+  animate([...mg.querySelectorAll('.metric-tile')],'show',80);
+
+  // Leaderboard
+  const fp = Object.fromEntries((data.firstPlace||[]).map(x=>[x.name,x.count??x.pts??0]));
+  const sp = Object.fromEntries((data.secondPlace||[]).map(x=>[x.name,x.count??x.pts??0]));
+  const tp = Object.fromEntries((data.thirdPlace||[]).map(x=>[x.name,x.count??x.pts??0]));
+  const rankSym=['🥇','🥈','🥉'], rankCls=['r1','r2','r3'];
+
+  document.getElementById('lb-list').innerHTML = sorted.map((p,i)=>`
+    <div class="lb-row ${i===0?'top1':''}">
+      <div class="lb-num ${rankCls[i]||''}">${rankSym[i]||i+1}</div>
+      <div class="lb-avatar ${i===0?'a0':''}">${initials(p.name)}</div>
+      <div class="lb-info">
+        <div class="lb-name-row">
+          <span class="lb-name">${p.name}</span>
+          ${i===0?'<span class="leader-pill">Leader</span>':''}
+        </div>
+        <div class="lb-medals">🥇 ${fp[p.name]??0}&nbsp;&nbsp;🥈 ${sp[p.name]??0}&nbsp;&nbsp;🥉 ${tp[p.name]??0}</div>
+      </div>
+      <div class="lb-bar-col">
+        <div class="lb-bar-bg"><div class="lb-bar-fill" style="width:${(p.pts/maxPts*100).toFixed(1)}%"></div></div>
+      </div>
+      <div>
+        <div class="lb-score">${p.pts}</div>
+        <div class="lb-score-label">pts</div>
+      </div>
+    </div>`).join('');
+  animate([...document.querySelectorAll('.lb-row')],'show',65);
+
+  // Matches — "Void" is a valid player name, only flag truly empty slots
+  const rankLabel=['1ST PICK','2ND PICK','3RD PICK'];
+  const totalMatches = data.matches.length;
+  document.getElementById('matches-grid').innerHTML = [...data.matches].reverse().map((m,mi)=>{
+    const parts = m.match.split(' vs ');
+    const matchNum = totalMatches - mi;
+    return `
+    <div class="match-card">
+      <div class="match-header">
+        <div class="match-name">${parts[0]||m.match}<span class="match-vs"> vs </span>${parts[1]||''}</div>
+        <div class="match-num">Match ${matchNum}</div>
+      </div>
+      <div class="picks-row">${m.picks.map((p,pi)=>{
+        const isEmpty = !p || p==='—' || p==='-' || p==='';
+        return `<div class="pick-chip">
+          <div class="pick-rank ${rankCls[pi]}">${rankLabel[pi]}</div>
+          <div class="pick-name ${isEmpty?'empty':''}">${isEmpty?'—':p}</div>
+        </div>`;
+      }).join('')}</div>
+    </div>`;
+  }).join('');
+  animate([...document.querySelectorAll('.match-card')],'show',80);
+
+  // Chart
+  document.getElementById('chart-wrap').innerHTML = sorted.map(p=>`
+    <div class="chart-row-wrap">
+      <div class="chart-label">${p.name}</div>
+      <div class="chart-track">
+        ${p.pts>0
+          ?`<div class="chart-fill" style="width:${(p.pts/maxPts*100).toFixed(1)}%"><span class="chart-fill-val">${p.pts}</span></div>`
+          :`<span class="chart-zero">0 pts</span>`}
+      </div>
+    </div>`).join('');
+}
+
+async function autoLoad() {
+  setStatus('Loading…');
+  try {
+    const csvUrl = `https://docs.google.com/spreadsheets/d/${SHEET_ID}/export?format=csv&gid=0`;
+    const resp = await fetch(csvUrl);
+    if (!resp.ok) throw new Error('Sheet could not be loaded. Make sure it is shared publicly.');
+    const text = await resp.text();
+    const data = parseCSV(text);
+    renderDashboard(data);
+    const now = new Date().toLocaleTimeString('en-IN',{hour:'2-digit',minute:'2-digit'});
+    setStatus('Updated ' + now, 'ok');
+  } catch(e) {
+    setStatus('⚠ ' + e.message, 'error');
+  }
+}
+
+window.addEventListener('load', autoLoad);
+
+function parseCSV(text) {
+  const rows = text.trim().split('\n').map(r=>{
+    const out=[]; let cur='', inQ=false;
+    for (const c of r) {
+      if (c==='"') { inQ=!inQ; }
+      else if (c===',' && !inQ) { out.push(cur.trim()); cur=''; }
+      else cur+=c;
+    }
+    out.push(cur.trim());
+    return out;
+  });
+
+  const matches=[], winners=[], firstPlace=[], secondPlace=[], thirdPlace=[];
+
+  let winnerRow=-1, firstRow=-1, secondRow=-1, thirdRow=-1;
+  for (let i=0; i<rows.length; i++) {
+    const j=(rows[i][9]||'').trim();
+    if (/winner/i.test(j) && !/most/i.test(j)) winnerRow=i;
+    if (/most first/i.test(j))  firstRow=i;
+    if (/most second/i.test(j)) secondRow=i;
+    if (/most third/i.test(j))  thirdRow=i;
+  }
+
+  function collectSection(startRow, endRow) {
+    const out=[];
+    if (startRow<0) return out;
+    const limit = endRow>0 ? endRow : rows.length;
+    for (let i=startRow+1; i<limit; i++) {
+      const name=(rows[i][9]||'').trim();
+      const val=(rows[i][10]||'').trim();
+      if (!name) continue;
+      if (/most|winner/i.test(name)) break;
+      const num=parseFloat(val);
+      if (name && !isNaN(num)) out.push({name, count:num});
+    }
+    return out;
+  }
+
+  const sectionStarts=[
+    {key:'winners',row:winnerRow},{key:'first',row:firstRow},
+    {key:'second',row:secondRow},{key:'third',row:thirdRow}
+  ].filter(s=>s.row>=0).sort((a,b)=>a.row-b.row);
+
+  for (let si=0; si<sectionStarts.length; si++) {
+    const {key,row}=sectionStarts[si];
+    const nextRow=sectionStarts[si+1]?.row??rows.length;
+    const entries=collectSection(row,nextRow);
+    if (key==='winners') entries.forEach(e=>winners.push({name:e.name,pts:e.count}));
+    if (key==='first')   entries.forEach(e=>firstPlace.push({name:e.name,count:e.count}));
+    if (key==='second')  entries.forEach(e=>secondPlace.push({name:e.name,count:e.count}));
+    if (key==='third')   entries.forEach(e=>thirdPlace.push({name:e.name,count:e.count}));
+  }
+
+  // Matches — picks are non-empty, non-numeric values in cols B-D
+  for (let i=0; i<rows.length; i++) {
+    const a=(rows[i][0]||'').trim();
+    if (a.includes(' vs ')) {
+      const picks=[];
+      for (let c=1; c<=8 && picks.length<3; c++) {
+        const val=(rows[i][c]||'').trim();
+        if (val && isNaN(parseFloat(val))) picks.push(val);
+      }
+      while (picks.length<3) picks.push('—');
+      matches.push({match:a,picks});
+    }
+  }
+
+  if (!winners.length) return DEMO;
+  return {matches,winners,firstPlace,secondPlace,thirdPlace};
+}
+</script>
+</body>
+</html>
