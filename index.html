@@ -329,7 +329,21 @@ function animate(els, cls, delay=60) {
 function renderDashboard(data) {
   document.getElementById('main-content').style.display='block';
 
-  const sorted = [...data.winners].sort((a,b)=>b.pts-a.pts);
+  // Build lookup maps for tiebreakers before sorting
+  const fpMap = Object.fromEntries((data.firstPlace||[]).map(x=>[x.name, x.count??x.pts??0]));
+  const spMap = Object.fromEntries((data.secondPlace||[]).map(x=>[x.name, x.count??x.pts??0]));
+  const tpMap = Object.fromEntries((data.thirdPlace||[]).map(x=>[x.name, x.count??x.pts??0]));
+
+  // Sort: 1st by points, then 1st-place count, then 2nd-place count, then 3rd-place count
+  const sorted = [...data.winners].sort((a, b) => {
+    if (b.pts !== a.pts) return b.pts - a.pts;
+    const fp = (fpMap[b.name]??0) - (fpMap[a.name]??0);
+    if (fp !== 0) return fp;
+    const sp = (spMap[b.name]??0) - (spMap[a.name]??0);
+    if (sp !== 0) return sp;
+    return (tpMap[b.name]??0) - (tpMap[a.name]??0);
+  });
+
   const leader = sorted[0];
   const maxPts = Math.max(...sorted.map(p=>p.pts), .01);
 
@@ -344,9 +358,6 @@ function renderDashboard(data) {
   animate([...mg.querySelectorAll('.metric-tile')],'show',80);
 
   // Leaderboard
-  const fp = Object.fromEntries((data.firstPlace||[]).map(x=>[x.name,x.count??x.pts??0]));
-  const sp = Object.fromEntries((data.secondPlace||[]).map(x=>[x.name,x.count??x.pts??0]));
-  const tp = Object.fromEntries((data.thirdPlace||[]).map(x=>[x.name,x.count??x.pts??0]));
   const rankSym=['🥇','🥈','🥉'], rankCls=['r1','r2','r3'];
 
   document.getElementById('lb-list').innerHTML = sorted.map((p,i)=>`
@@ -358,7 +369,7 @@ function renderDashboard(data) {
           <span class="lb-name">${p.name}</span>
           ${i===0?'<span class="leader-pill">Leader</span>':''}
         </div>
-        <div class="lb-medals">🥇 ${fp[p.name]??0}&nbsp;&nbsp;🥈 ${sp[p.name]??0}&nbsp;&nbsp;🥉 ${tp[p.name]??0}</div>
+        <div class="lb-medals">🥇 ${fpMap[p.name]??0}&nbsp;&nbsp;🥈 ${spMap[p.name]??0}&nbsp;&nbsp;🥉 ${tpMap[p.name]??0}</div>
       </div>
       <div class="lb-bar-col">
         <div class="lb-bar-bg"><div class="lb-bar-fill" style="width:${(p.pts/maxPts*100).toFixed(1)}%"></div></div>
